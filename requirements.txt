@@ -1,0 +1,9 @@
+streamlit
+pymupdf
+python-dotenv
+pinecone
+langchain-huggingface
+sentence-transformers
+scikit-learn
+rank-bm25
+google-genai
