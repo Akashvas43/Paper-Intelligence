@@ -153,9 +153,9 @@ def search_documents(
 
     start = time.perf_counter()
 
-    query_vector = get_embeddings().embed_query(
-        query
-    )
+    query_vector = list(
+        get_embeddings().embed([query])
+    )[0]
 
     embedding_time = (
         time.perf_counter() - start

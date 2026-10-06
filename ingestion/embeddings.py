@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import streamlit as st
 
 sys.path.append(
@@ -16,18 +17,15 @@ from ingestion.pdf_loader import (
     looks_like_research_paper
 )
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from fastembed import TextEmbedding
+
 
 @st.cache_resource
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="BAAI/bge-small-en-v1.5",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={
-            "normalize_embeddings": True,
-            "batch_size": 32
-        }
+    return TextEmbedding(
+        model_name="BAAI/bge-small-en-v1.5"
     )
+
 
 def create_embeddings(pdf_path, doc_id):
 
@@ -48,7 +46,18 @@ def create_embeddings(pdf_path, doc_id):
         for chunk in chunks
     ]
 
+    # Model load timing
+    start = time.perf_counter()
+
     embedding_model = get_embeddings()
+
+    print(
+        f"Model load time: "
+        f"{time.perf_counter() - start:.2f}s"
+    )
+
+    # Actual embedding timing
+    start = time.perf_counter()
 
     vectors = []
 
@@ -60,15 +69,18 @@ def create_embeddings(pdf_path, doc_id):
             i:i + batch_size
         ]
 
-        batch_vectors = (
-            embedding_model.embed_documents(
-                batch
-            )
+        batch_vectors = list(
+            embedding_model.embed(batch)
         )
 
         vectors.extend(
             batch_vectors
         )
+
+    print(
+        f"Embedding time: "
+        f"{time.perf_counter() - start:.2f}s"
+    )
 
     records = []
 
@@ -83,6 +95,7 @@ def create_embeddings(pdf_path, doc_id):
         })
 
     return records
+
 
 if __name__ == "__main__":
 

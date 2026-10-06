@@ -7,3 +7,4 @@ sentence-transformers
 scikit-learn
 rank-bm25
 google-genai
+fastembed
