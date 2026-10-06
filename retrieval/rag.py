@@ -13,24 +13,14 @@ sys.path.append(
 
 from ingestion.pdf_loader import load_pdf
 from ingestion.chunker import create_chunks
-
 from ingestion.embeddings import get_embeddings
-
 from sklearn.metrics.pairwise import cosine_similarity
-
 from rank_bm25 import BM25Okapi
-
-from sentence_transformers import CrossEncoder
-
 from dotenv import load_dotenv
-
 from google import genai
-
 from pinecone import Pinecone
 
-
 load_dotenv()
-
 
 # ============================================================
 # CLIENTS
@@ -55,6 +45,8 @@ pinecone_index = pc.Index(
 
 @st.cache_resource
 def get_reranker():
+
+    from sentence_transformers import CrossEncoder
 
     return CrossEncoder(
         "BAAI/bge-reranker-base",
