@@ -66,7 +66,7 @@ def upload_to_pinecone(pdf_path):
 
     response = index.upsert(
         vectors=vectors,
-        batch_size=100
+        batch_size=100,
         max_concurrency=4
     )
 
