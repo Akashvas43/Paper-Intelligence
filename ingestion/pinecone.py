@@ -11,12 +11,9 @@ sys.path.append(
 
 from dotenv import load_dotenv
 from pinecone import Pinecone
-
 from ingestion.embeddings import create_embeddings
 
-
 load_dotenv()
-
 
 def upload_to_pinecone(pdf_path):
 
@@ -70,6 +67,7 @@ def upload_to_pinecone(pdf_path):
     response = index.upsert(
         vectors=vectors,
         batch_size=100
+        max_concurrency=4
     )
 
     print("Upload complete.")

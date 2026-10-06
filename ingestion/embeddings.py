@@ -18,7 +18,6 @@ from ingestion.pdf_loader import (
 
 from langchain_huggingface import HuggingFaceEmbeddings
 
-
 @st.cache_resource
 def get_embeddings():
     return HuggingFaceEmbeddings(
@@ -49,9 +48,27 @@ def create_embeddings(pdf_path, doc_id):
         for chunk in chunks
     ]
 
-    vectors = get_embeddings().embed_documents(
-        texts
-    )
+    embedding_model = get_embeddings()
+
+    vectors = []
+
+    batch_size = 32
+
+    for i in range(0, len(texts), batch_size):
+
+        batch = texts[
+            i:i + batch_size
+        ]
+
+        batch_vectors = (
+            embedding_model.embed_documents(
+                batch
+            )
+        )
+
+        vectors.extend(
+            batch_vectors
+        )
 
     records = []
 
