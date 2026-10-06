@@ -49,7 +49,7 @@ def get_reranker():
     from sentence_transformers import CrossEncoder
 
     return CrossEncoder(
-        "BAAI/bge-reranker-base",
+        "cross-encoder/ms-marco-MiniLM-L6-v2",
         max_length=512
     )
 
