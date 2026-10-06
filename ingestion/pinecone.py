@@ -2,7 +2,11 @@ import os
 import sys
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    )
 )
 
 from dotenv import load_dotenv
@@ -10,21 +14,28 @@ from pinecone import Pinecone
 
 from ingestion.embeddings import create_embeddings
 
+
 load_dotenv()
 
 
 def upload_to_pinecone(pdf_path):
 
-    api_key = os.getenv("PINECONE_API_KEY")
+    api_key = os.getenv(
+        "PINECONE_API_KEY"
+    )
 
     if not api_key:
         raise ValueError(
             "PINECONE_API_KEY not found in .env"
         )
 
-    pc = Pinecone(api_key=api_key)
+    pc = Pinecone(
+        api_key=api_key
+    )
 
-    index = pc.index("research-rag")
+    index = pc.Index(
+        "research-rag"
+    )
 
     doc_id = os.path.splitext(
         os.path.basename(pdf_path)
@@ -42,10 +53,10 @@ def upload_to_pinecone(pdf_path):
     for record in records:
 
         vectors.append({
-            "id": f'{doc_id}-{record["chunk_id"]}',
-
+            "id": (
+                f'{doc_id}-{record["chunk_id"]}'
+            ),
             "values": record["vector"],
-
             "metadata": {
                 "doc_id": record["doc_id"],
                 "chunk_id": record["chunk_id"],
@@ -62,19 +73,9 @@ def upload_to_pinecone(pdf_path):
     )
 
     print("Upload complete.")
-
     print(
         "Vectors uploaded:",
         response.upserted_count
     )
 
     return doc_id, records
-
-
-if __name__ == "__main__":
-
-    pdf_path = input(
-        "Enter PDF path: "
-    ).strip()
-
-    upload_to_pinecone(pdf_path)

@@ -1,18 +1,34 @@
-import sys
 import os
+import sys
+import streamlit as st
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    )
 )
 
 from ingestion.chunker import create_chunks
-from langchain_huggingface import HuggingFaceEmbeddings
-
 from ingestion.pdf_loader import (
     load_pdf,
     looks_like_research_paper
 )
 
+from langchain_huggingface import HuggingFaceEmbeddings
+
+
+@st.cache_resource
+def get_embeddings():
+    return HuggingFaceEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5",
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={
+            "normalize_embeddings": True,
+            "batch_size": 32
+        }
+    )
 
 def create_embeddings(pdf_path, doc_id):
 
@@ -28,16 +44,14 @@ def create_embeddings(pdf_path, doc_id):
         doc_id
     )
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="BAAI/bge-small-en-v1.5"
-    )
-
     texts = [
         chunk["text"]
         for chunk in chunks
     ]
 
-    vectors = embeddings.embed_documents(texts)
+    vectors = get_embeddings().embed_documents(
+        texts
+    )
 
     records = []
 
@@ -53,10 +67,11 @@ def create_embeddings(pdf_path, doc_id):
 
     return records
 
-
 if __name__ == "__main__":
 
-    pdf_path = input("Enter PDF path: ").strip()
+    pdf_path = input(
+        "Enter PDF path: "
+    ).strip()
 
     doc_id = os.path.splitext(
         os.path.basename(pdf_path)

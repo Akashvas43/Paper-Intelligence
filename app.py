@@ -124,7 +124,8 @@ section[data-testid="stSidebar"] .block-container { padding-top:34px; }
 .empty .small { color:var(--faint); font-size:13px; margin-top:4px; }
 
 /* ---- misc ---- */
-[data-testid="stChatInput"] textarea { border-radius:12px !important; border:1px solid var(--border) !important; background:var(--panel) !important; color:var(--text) !important; }
+[data-testid="stChatInput"] textarea { border-radius:12px !important; border:1px solid var(--border) !important; background:var(--panel) !important; color:#000000  !important; }
+[data-testid="stBottom"] > div {background: #151820 !important;}
 div[data-testid="stExpander"] { background:var(--panel); border:1px solid var(--border); border-radius:12px; }
 [data-testid="stSpinner"] { color:var(--gold); }
 .stAlert { border-radius:10px; }
@@ -163,27 +164,6 @@ def build_overview_context(retriever, max_chunks=8):
         sample = [chunks[int(i * step)] for i in range(max_chunks)]
     return "\n\n".join(f'Page {c.get("page_number","?")}:\n{c.get("text","")}' for c in sample)
 
-
-def generate_suggested_questions(retriever):
-    try:
-        context = build_overview_context(retriever)
-        if not context:
-            return FALLBACK_QUESTIONS
-        prompt = (
-            "Based only on the excerpts below, write exactly 3 specific, concrete "
-            "questions a reader could ask about this paper (about its problem, "
-            "method, or results). Return only the 3 questions, one per line, "
-            "numbered 1-3. No other text."
-        )
-        raw = generate_answer(prompt, context, [])
-        qs = []
-        for line in raw.splitlines():
-            cleaned = re.sub(r"^[\-\*\d\.\)]+\s*", "", line.strip()).strip()
-            if cleaned.endswith("?") and 8 <= len(cleaned) <= 160:
-                qs.append(cleaned)
-        return qs[:3] if len(qs) >= 2 else FALLBACK_QUESTIONS
-    except Exception:
-        return FALLBACK_QUESTIONS
 
 
 def doc_stats(retriever):
@@ -229,22 +209,29 @@ if not st.session_state.processed:
                 f.write(uploaded_file.getbuffer())
                 pdf_path = f.name
 
-            with st.status("Processing your paper", expanded=True) as status:
-                st.write("Extracting text & building embeddings…")
+            with st.status("Processing your paper...", expanded=False) as status:
+
                 doc_id, records = upload_to_pinecone(pdf_path)
 
-                st.write("Assembling the retriever index…")
-                retriever = build_retriever(pdf_path, doc_id, records)
+                retriever = build_retriever(
+                    pdf_path,
+                    doc_id,
+                    records
+                )
 
-                st.write("Curating a few starter questions…")
-                suggestions = generate_suggested_questions(retriever)
-
-                status.update(label="Ready to explore", state="complete")
-
+                status.update(
+                    label="Paper ready",
+                    state="complete"
+                )
+            
             st.session_state.update(
-                processed=True, retriever=retriever, doc_id=doc_id,
-                filename=uploaded_file.name, history=[],
-                suggestions=suggestions, feedback={},
+                processed=True,
+                retriever=retriever,
+                doc_id=doc_id,
+                filename=uploaded_file.name,
+                history=[],
+                suggestions=FALLBACK_QUESTIONS,
+                feedback={},
             )
             st.rerun()
 
@@ -335,7 +322,10 @@ else:
         with st.spinner(random.choice(THINKING_LINES)):
             top_chunks, reranked = search_documents(question, retriever, final_k=5)
 
-        valid, message = validate_context(top_chunks, reranked, retriever["chunks"])
+        valid, message = validate_context(
+                top_chunks,
+                reranked
+        )
 
         if not valid:
             st.error(message)
@@ -350,7 +340,7 @@ else:
             with st.spinner("Drafting a grounded answer…"):
                 answer = generate_answer(question, context, history)
 
-            valid, message = validate_answer(answer, context)
+            valid, message = validate_answer(answer,context)
             if not valid:
                 st.error(message)
             else:
